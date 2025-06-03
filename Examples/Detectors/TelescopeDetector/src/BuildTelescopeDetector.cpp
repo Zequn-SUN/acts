@@ -28,6 +28,8 @@
 #include "Acts/Surfaces/Surface.hpp"
 #include "Acts/Surfaces/SurfaceArray.hpp"
 #include "Acts/Utilities/Logger.hpp"
+#include "Acts/Visualization/GeometryView3D.hpp"
+#include "Acts/Visualization/ObjVisualization3D.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -100,7 +102,10 @@ ActsExamples::Telescope::buildDetector(
           std::make_shared<const Acts::Transform3>(trafo), rBounds, 1._um,
           surfaceMaterial);
     }
-    // Get the surface
+    detElement->setIdentifier(i);
+    // std::cout << i << std::endl;
+    // std::cout << detElement->identifier() << std::endl;
+    //  Get the surface
     auto surface = detElement->surface().getSharedPtr();
     // Add the detector element to the detector store
     detectorStore.push_back(std::move(detElement));
@@ -150,6 +155,25 @@ ActsExamples::Telescope::buildDetector(
   std::unique_ptr<const Acts::LayerArray> layArr(layArrCreator.layerArray(
       genGctx, layVec, positions.front() - 2._mm, positions.back() + 2._mm,
       Acts::BinningType::arbitrary, binValue));
+
+  // Save as obj file
+  //std::string ObjPath =
+  //    "/home/zqsun/ACTS/ProgramFile/main/acts/Tests/MisalignmentTests/"
+  //    "Telescope/Test/Obj/Telescope.obj";
+  //Acts::ObjVisualization3D objVisualizer;
+  //for (auto& lay : layVec) {
+  //  auto sArray = lay->surfaceArray();
+  //  if (sArray != nullptr) {
+  //    for (auto& surface : sArray->surfaces()) {
+  //      Acts::GeometryView3D::drawSurface(objVisualizer, *surface, genGctx,
+  //                                        surface->transform(genGctx),
+  //                                        {.color = {255, 0, 0}});
+  //    }
+  //  }
+  //}
+  //objVisualizer.write(ObjPath);
+  //objVisualizer.clear();
+  //std::cout << "Successfully exported to " << ObjPath << std::endl;
 
   // Build the tracking volume
   auto trackVolume = std::make_shared<Acts::TrackingVolume>(

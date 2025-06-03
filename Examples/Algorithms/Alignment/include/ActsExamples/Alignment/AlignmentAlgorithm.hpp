@@ -17,6 +17,7 @@
 #include "ActsExamples/Framework/DataHandle.hpp"
 #include "ActsExamples/Framework/IAlgorithm.hpp"
 #include "ActsExamples/MagneticField/MagneticField.hpp"
+#include "ActsExamples/TelescopeDetector/TelescopeAlignedTranformUpdater.hpp"
 
 #include <functional>
 #include <memory>
@@ -96,7 +97,8 @@ class AlignmentAlgorithm final : public IAlgorithm {
     /// Type erased fitter function.
     std::shared_ptr<AlignmentFunction> align;
     /// The aligned transform updater
-    ActsAlignment::AlignedTransformUpdater alignedTransformUpdater;
+    ActsAlignment::AlignedTransformUpdater alignedTransformUpdater =
+        ActsExamples::Telescope::alignedTransformUpdater;
     /// The surfaces (with detector elements) to be aligned
     std::vector<Acts::DetectorElementBase*> alignedDetElements;
     /// The alignment mask at each iteration
@@ -110,6 +112,9 @@ class AlignmentAlgorithm final : public IAlgorithm {
     /// Number of tracks to be used for alignment
     int maxNumTracks = -1;
     std::vector<AlignmentGroup> m_groups;
+    /// Tracking geometry and the magnetic field
+    std::shared_ptr<const Acts::TrackingGeometry> trackingGeometry = nullptr;
+    std::shared_ptr<const Acts::MagneticFieldProvider> magneticField = nullptr;
   };
 
   /// Constructor of the alignment algorithm
@@ -124,6 +129,14 @@ class AlignmentAlgorithm final : public IAlgorithm {
   /// @return a process code to steer the algorithm flow
   ActsExamples::ProcessCode execute(
       const ActsExamples::AlgorithmContext& ctx) const override;
+
+  const Config& config() const { return m_cfg; }
+  const Acts::Surface* mySurfaceAccessor(
+      const Acts::SourceLink& sourceLink) const {
+    const auto& indexSourceLink = sourceLink.get<IndexSourceLink>();
+    Acts::GeometryIdentifier geoId = indexSourceLink.geometryId();
+    return this->m_cfg.trackingGeometry->findSurface(geoId);
+  }
 
  private:
   Config m_cfg;

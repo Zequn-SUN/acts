@@ -10,12 +10,15 @@
 
 #include "Acts/Definitions/Units.hpp"
 #include "Acts/Utilities/Logger.hpp"
+#include "ActsAlignment/Kernel/Alignment.hpp"
+#include "ActsExamples/TelescopeDetector/TelescopeAlignedTranformUpdater.hpp"
 #include "ActsExamples/Utilities/Options.hpp"
 
 #include <array>
 #include <memory>
 #include <utility>
 #include <vector>
+//#include "ActsExamples/Alignment/AlignmentAlgorithm.hpp"
 
 using namespace Acts::UnitLiterals;
 
@@ -59,6 +62,9 @@ struct TelescopeDetector {
   std::pair<TrackingGeometryPtr, ContextDecorators> finalize(
       const Config& cfg,
       const std::shared_ptr<const Acts::IMaterialDecorator>& mdecorator);
+
+  // whether use the nominal geometry
+  bool m_nominal = 0;  // false;
 };
 
 }  // namespace ActsExamples::Telescope

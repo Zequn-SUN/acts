@@ -15,6 +15,7 @@ target_link_libraries(
         ActsAlignment
         ActsExamplesFramework
         ActsExamplesMagneticField
+	ActsExamplesDetectorTelescope
 )
 
 install(

@@ -11,6 +11,7 @@
 #include "Acts/Geometry/TrackingGeometry.hpp"
 #include "Acts/Utilities/BinningType.hpp"
 #include "ActsExamples/TelescopeDetector/BuildTelescopeDetector.hpp"
+#include "ActsExamples/TelescopeDetector/TelescopeAlignmentDecorator.hpp"
 #include "ActsExamples/TelescopeDetector/TelescopeDetectorElement.hpp"
 
 #include <algorithm>
@@ -55,8 +56,24 @@ auto ActsExamples::Telescope::TelescopeDetector::finalize(
       static_cast<ActsExamples::Telescope::TelescopeSurfaceType>(
           cfg.surfaceType),
       static_cast<Acts::BinningValue>(cfg.binValue));
-  ContextDecorators gContextDecorators = {};
+
+  TelescopeAlignmentDecorator::Config telescopeAcfg;
+  telescopeAcfg.positions = positions;
+  telescopeAcfg.stereos = stereos;
+  telescopeAcfg.offsets = cfg.offsets;
+  telescopeAcfg.bounds = cfg.bounds;
+  telescopeAcfg.thickness = cfg.thickness;
+  telescopeAcfg.surfaceType =
+      static_cast<ActsExamples::Telescope::TelescopeSurfaceType>(
+          cfg.surfaceType);
+  telescopeAcfg.binValue = static_cast<Acts::BinningValue>(cfg.binValue);
+  telescopeAcfg.nominal = m_nominal;
+  telescopeAcfg.detectorStore = detectorStore;
+  ContextDecorators teleContextDecorators = {};
+  teleContextDecorators.push_back(std::make_shared<TelescopeAlignmentDecorator>(
+      std::move(telescopeAcfg),
+      Acts::getDefaultLogger("AlignmentDecorator", Acts::Logging::INFO)));
   // return the pair of geometry and empty decorators
   return std::make_pair<TrackingGeometryPtr, ContextDecorators>(
-      std::move(gGeometry), std::move(gContextDecorators));
+      std::move(gGeometry), std::move(teleContextDecorators));
 }

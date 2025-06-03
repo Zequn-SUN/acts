@@ -16,6 +16,7 @@
 #include "ActsExamples/EventData/ProtoTrack.hpp"
 #include "ActsExamples/EventData/Trajectories.hpp"
 #include "ActsExamples/Framework/WhiteBoard.hpp"
+#include "ActsExamples/TelescopeDetector/TelescopeGeometryContext.hpp"
 
 ActsExamples::AlignmentAlgorithm::AlignmentAlgorithm(Config cfg,
                                                      Acts::Logging::Level lvl)
@@ -35,11 +36,21 @@ ActsExamples::AlignmentAlgorithm::AlignmentAlgorithm(Config cfg,
     throw std::invalid_argument(
         "Missing output alignment parameters collection");
   }
+  if (m_cfg.trackingGeometry == nullptr) {
+    throw std::invalid_argument("Missing input trackingGeometry");
+  }
+  if (m_cfg.magneticField == nullptr) {
+    throw std::invalid_argument("Missing input magneticField");
+  }
 
   m_inputMeasurements.initialize(m_cfg.inputMeasurements);
   m_inputProtoTracks.initialize(m_cfg.inputProtoTracks);
   m_inputInitialTrackParameters.initialize(m_cfg.inputInitialTrackParameters);
   m_outputAlignmentParameters.initialize(m_cfg.outputAlignmentParameters);
+  std::shared_ptr<ActsExamples::AlignmentAlgorithm::AlignmentFunction>
+      alignmentFunction =
+          makeAlignmentFunction(m_cfg.trackingGeometry, m_cfg.magneticField);
+  m_cfg.align = alignmentFunction;
 }
 
 ActsExamples::ProcessCode ActsExamples::AlignmentAlgorithm::execute(
@@ -105,6 +116,9 @@ ActsExamples::ProcessCode ActsExamples::AlignmentAlgorithm::execute(
       &Acts::GainMatrixSmoother::operator()<Acts::VectorMultiTrajectory>>(
       &kfSmoother);
 
+  extensions.surfaceAccessor
+      .connect<&ActsExamples::AlignmentAlgorithm::mySurfaceAccessor>(this);
+
   // Set the KalmanFitter options
   TrackFitterOptions kfOptions(
       ctx.geoContext, ctx.magFieldContext, ctx.calibContext, extensions,
@@ -116,10 +130,19 @@ ActsExamples::ProcessCode ActsExamples::AlignmentAlgorithm::execute(
       kfOptions, m_cfg.alignedTransformUpdater, m_cfg.alignedDetElements,
       m_cfg.chi2ONdfCutOff, m_cfg.deltaChi2ONdfCutOff, m_cfg.maxNumIterations);
 
+  alignOptions.iterationState.clear();
+  for (const auto& [key, bits] : m_cfg.iterationState) {
+    std::uint8_t maskValue = static_cast<std::uint8_t>(bits.to_ulong());
+    alignOptions.iterationState[key] =
+        static_cast<ActsAlignment::AlignmentMask>(maskValue);
+  }
+
   ACTS_DEBUG("Invoke track-based alignment with " << numTracksUsed
                                                   << " input tracks");
+
   auto result =
       (*m_cfg.align)(sourceLinkTrackContainer, initialParameters, alignOptions);
+
   if (result.ok()) {
     const auto& alignOutput = result.value();
     alignedParameters = alignOutput.alignedParameters;

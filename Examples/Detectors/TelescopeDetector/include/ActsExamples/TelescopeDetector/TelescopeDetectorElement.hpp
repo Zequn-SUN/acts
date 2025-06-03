@@ -37,6 +37,7 @@ class TelescopeDetectorElement : public Acts::DetectorElementBase {
   struct ContextType {
     /// The current interval of validity
     unsigned int iov = 0;
+    bool nominal = false;
   };
 
   /// Constructor for single sided detector element
@@ -89,22 +90,13 @@ class TelescopeDetectorElement : public Acts::DetectorElementBase {
   const Acts::Transform3& nominalTransform(
       const Acts::GeometryContext& gctx) const;
 
-  /// Return local to global transform associated with this identifier
-  ///
-  /// @param alignedTransform is a new transform
-  /// @param iov is the batch for which it is meant
-  void addAlignedTransform(std::unique_ptr<Acts::Transform3> alignedTransform,
-                           unsigned int iov);
-
-  /// Return the set of alignment transforms in flight
-  const std::vector<std::unique_ptr<Acts::Transform3>>& alignedTransforms()
-      const;
+  /// set and get the identifier of this telescope detector element
+  void setIdentifier(unsigned long long id) { m_identifier = id; }
+  unsigned long long identifier() const { return this->m_identifier; }
 
  private:
   /// the transform for positioning in 3D space
   std::shared_ptr<const Acts::Transform3> m_elementTransform = nullptr;
-  // the aligned transforms
-  std::vector<std::unique_ptr<Acts::Transform3>> m_alignedTransforms = {};
   /// the surface represented by it
   std::shared_ptr<Acts::Surface> m_elementSurface = nullptr;
   /// the element thickness
@@ -113,6 +105,8 @@ class TelescopeDetectorElement : public Acts::DetectorElementBase {
   std::shared_ptr<const Acts::PlanarBounds> m_elementPlanarBounds = nullptr;
   /// the disc bounds
   std::shared_ptr<const Acts::DiscBounds> m_elementDiscBounds = nullptr;
+  /// identifier
+  unsigned long long m_identifier = 0;
 };
 
 inline const Acts::Surface& TelescopeDetectorElement::surface() const {
@@ -127,36 +121,9 @@ inline double TelescopeDetectorElement::thickness() const {
   return m_elementThickness;
 }
 
-inline const Acts::Transform3& TelescopeDetectorElement::transform(
-    const Acts::GeometryContext& gctx) const {
-  // Check if a different transform than the nominal exists
-  if (!m_alignedTransforms.empty()) {
-    // cast into the right context object
-    auto alignContext = gctx.get<ContextType>();
-    return (*m_alignedTransforms[alignContext.iov].get());
-  }
-  // Return the standard transform if not found
-  return nominalTransform(gctx);
-}
-
 inline const Acts::Transform3& TelescopeDetectorElement::nominalTransform(
     const Acts::GeometryContext& /*gctx*/) const {
   return *m_elementTransform;
-}
-
-inline void TelescopeDetectorElement::addAlignedTransform(
-    std::unique_ptr<Acts::Transform3> alignedTransform, unsigned int iov) {
-  // most standard case, it's just a new one:
-  auto cios = m_alignedTransforms.size();
-  for (unsigned int ic = cios; ic <= iov; ++ic) {
-    m_alignedTransforms.push_back(nullptr);
-  }
-  m_alignedTransforms[iov] = std::move(alignedTransform);
-}
-
-inline const std::vector<std::unique_ptr<Acts::Transform3>>&
-TelescopeDetectorElement::alignedTransforms() const {
-  return m_alignedTransforms;
 }
 
 }  // namespace ActsExamples::Telescope

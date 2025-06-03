@@ -27,6 +27,10 @@
 #include <utility>
 #include <vector>
 
+#include <pybind11/chrono.h>
+#include <pybind11/complex.h>
+#include <pybind11/eigen.h>
+#include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -67,6 +71,20 @@ void addDetector(Context& ctx) {
   {
     using TelescopeDetector = Telescope::TelescopeDetector;
     using Config = TelescopeDetector::Config;
+    using AlignedTransformUpdater = std::function<bool(
+        Acts::DetectorElementBase*, const Acts::GeometryContext&,
+        const Eigen::Transform<double, 3, 2>&)>;
+
+    py::class_<Acts::DetectorElementBase,
+               std::shared_ptr<Acts::DetectorElementBase>>(
+        mex, "DetectorElementBase");
+    py::class_<
+        ActsExamples::Telescope::TelescopeDetectorElement,
+        Acts::DetectorElementBase,
+        std::shared_ptr<ActsExamples::Telescope::TelescopeDetectorElement>>(
+        mex, "TelescopeDetectorElement")
+        .def("identifier",
+             &ActsExamples::Telescope::TelescopeDetectorElement::identifier);
 
     auto td =
         py::class_<TelescopeDetector, std::shared_ptr<TelescopeDetector>>(
@@ -76,7 +94,25 @@ void addDetector(Context& ctx) {
                  py::overload_cast<
                      const Config&,
                      const std::shared_ptr<const Acts::IMaterialDecorator>&>(
-                     &TelescopeDetector::finalize));
+                     &TelescopeDetector::finalize))
+            .def_property_readonly(
+                "detectorStore",
+                [](TelescopeDetector& self) { return self.detectorStore; });
+
+    td.def_readonly_static("alignedTransformUpdater",
+                           &ActsExamples::Telescope::alignedTransformUpdater);
+    // td.def_property_static("alignedTransformUpdater",
+    // &ActsExamples::Telescope::alignedTransformUpdater);
+    /*
+    td.def_property_static("alignedTransformUpdater",
+                    [](py::object) -> AlignedTransformUpdater {
+                    return ActsExamples::Telescope::alignedTransformUpdater;
+                    },
+                    [](py::object, AlignedTransformUpdater f) {
+                    ActsExamples::Telescope::alignedTransformUpdater =
+    std::move(f);
+                    });
+*/
 
     py::class_<Config>(td, "Config")
         .def(py::init<>())

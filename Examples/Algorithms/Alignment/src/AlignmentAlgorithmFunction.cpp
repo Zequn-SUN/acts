@@ -23,8 +23,8 @@ namespace {
 using Updater = Acts::GainMatrixUpdater;
 using Smoother = Acts::GainMatrixSmoother;
 using Stepper = Acts::EigenStepper<>;
-using Propagator = Acts::Propagator<Stepper, Acts::Navigator>;
-using Fitter = Acts::KalmanFitter<Propagator, Acts::VectorMultiTrajectory>;
+using Propagator_t = Acts::Propagator<Stepper, Acts::Navigator>;
+using Fitter = Acts::KalmanFitter<Propagator_t, Acts::VectorMultiTrajectory>;
 using Alignment = ActsAlignment::Alignment<Fitter>;
 
 struct AlignmentFunctionImpl
@@ -55,7 +55,7 @@ ActsExamples::AlignmentAlgorithm::makeAlignmentFunction(
   cfg.resolveMaterial = true;
   cfg.resolveSensitive = true;
   Acts::Navigator navigator(cfg);
-  Propagator propagator(std::move(stepper), std::move(navigator));
+  Propagator_t propagator(std::move(stepper), std::move(navigator));
   Fitter trackFitter(std::move(propagator));
   Alignment alignment(std::move(trackFitter));
 

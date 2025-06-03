@@ -10,6 +10,9 @@
 
 #include "Acts/Surfaces/DiscSurface.hpp"
 #include "Acts/Surfaces/PlaneSurface.hpp"
+#include "ActsExamples/TelescopeDetector/TelescopeGeometryContext.hpp"
+
+using namespace Acts;
 
 ActsExamples::Telescope::TelescopeDetectorElement::TelescopeDetectorElement(
     std::shared_ptr<const Acts::Transform3> transform,
@@ -39,4 +42,15 @@ ActsExamples::Telescope::TelescopeDetectorElement::TelescopeDetectorElement(
       m_elementPlanarBounds(nullptr),
       m_elementDiscBounds(std::move(dBounds)) {
   m_elementSurface->assignSurfaceMaterial(std::move(material));
+}
+
+const Acts::Transform3&
+ActsExamples::Telescope::TelescopeDetectorElement::transform(
+    const GeometryContext& gctx) const {
+  const ActsExamples::Telescope::TelescopeGeometryContext* telescopeGtx =
+      gctx.maybeGet<ActsExamples::Telescope::TelescopeGeometryContext>();
+  if (telescopeGtx != nullptr) {
+    return telescopeGtx->contextualTransform(*this);
+  }
+  return this->nominalTransform(gctx);
 }

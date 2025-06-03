@@ -4,6 +4,8 @@ add_library(
     src/TelescopeDetector.cpp
     src/TelescopeDetectorElement.cpp
     src/BuildTelescopeDetector.cpp
+    src/TelescopeGeometryContext.cpp
+    src/TelescopeAlignmentDecorator.cpp
 )
 target_include_directories(
     ActsExamplesDetectorTelescope
@@ -11,7 +13,9 @@ target_include_directories(
 )
 target_link_libraries(
     ActsExamplesDetectorTelescope
-    PUBLIC ActsCore ActsExamplesFramework
+    PUBLIC 
+    	ActsCore 
+	ActsExamplesFramework 
 )
 
 install(
